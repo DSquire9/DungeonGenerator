@@ -8,38 +8,30 @@ namespace DungeonGenerator
 {
     class Cell
     {
-        private bool isActive;
-        private bool isBoss;
-        private bool isShop;
-        private bool isVault;
+        // Room properties
+        public bool IsActive { get; set; }
+        public bool IsBoss { get; set; }
+        public bool IsShop { get; set; }
+        public bool IsVault { get; set; }
+        public bool IsStart { get; set; }
 
+        // A* Properties
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Cost { get; set; }
+        public int Distance { get; set; }
+        public int CostDistance => Cost + Distance;
+        public Cell Parent { get; set; }
+
+        // Constructor
         public Cell()
         {
-            isActive = false;
-            isBoss = false;
-            isShop = false;
-            isVault = false;
         }
-
-        public bool IsActive
+        
+        // Using Manhattan Distance 
+        public void SetDistance(int targetX, int targetY)
         {
-            get { return isActive; }
-            set { isActive = value; }
-        }
-        public bool IsBoss
-        {
-            get { return isBoss; }
-            set { isBoss = value; }
-        }
-        public bool IsShop
-        {
-            get { return isShop; }
-            set { isShop = value; }
-        }
-        public bool IsVault
-        {
-            get { return isVault; }
-            set { isVault = value; }
+            this.Distance = Math.Abs(targetX - X) + Math.Abs(targetY - Y);
         }
 
         public void Print()
@@ -56,7 +48,11 @@ namespace DungeonGenerator
             {
                 Console.BackgroundColor = ConsoleColor.DarkYellow;
             }
-            else if (isActive)
+            else if (IsStart)
+            {
+                Console.BackgroundColor = ConsoleColor.Cyan;
+            }
+            else if (IsActive)
             {
                 Console.BackgroundColor = ConsoleColor.White;
             }
