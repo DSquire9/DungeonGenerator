@@ -10,6 +10,7 @@ namespace DungeonGenerator
     {
         // Room properties
         public bool IsActive { get; set; }
+        public bool IsBlocked { get; set; }
         public bool IsBoss { get; set; }
         public bool IsShop { get; set; }
         public bool IsVault { get; set; }
@@ -27,6 +28,7 @@ namespace DungeonGenerator
         public Cell()
         {
             IsActive = false;
+            IsBlocked = false;
             IsBoss = false;
             IsShop = false;
             IsStart = false;

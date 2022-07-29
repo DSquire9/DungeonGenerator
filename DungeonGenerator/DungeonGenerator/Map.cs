@@ -176,6 +176,24 @@ namespace DungeonGenerator
 
         private List<Cell> GetWalkableCells(Cell current, Cell target)
         {
+            // Figure out what the target is so we don't cross it with another point
+            bool isShop = false;
+            if (target.X == shop.X && target.Y == shop.Y)
+            {
+                isShop = true;
+            }
+            bool isBoss = false;
+            if (target.X == boss.X && target.Y == boss.Y)
+            {
+                isBoss = true;
+            }
+            bool isVault = false;
+            if (target.X == vault.X && target.Y == vault.Y)
+            {
+                isVault = true;
+            }
+
+
             List<Cell> possibleCells = new List<Cell>()
             {
                 new Cell{X = current.X, Y = current.Y - 1, Parent = current, Cost = current.Cost + 1 },
@@ -185,12 +203,12 @@ namespace DungeonGenerator
             };
 
             possibleCells.ForEach(cell => cell.SetDistance(target.X, target.Y));
-
+            
 
             return possibleCells
                 .Where(cell => cell.X >= 0 && cell.X < mapSize)
                 .Where(cell => cell.Y >= 0 && cell.Y < mapSize)
-                .Where(cell => cell.IsShop == false && cell.IsVault == false && cell.IsBoss == false)
+                .Where(cell => (grid[cell.X, cell.Y].IsShop == false || isShop) && (grid[cell.X, cell.Y].IsVault == false || isVault) && (grid[cell.X, cell.Y].IsBoss == false || isBoss))
                 .ToList();
         }
 
