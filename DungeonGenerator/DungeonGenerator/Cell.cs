@@ -26,6 +26,11 @@ namespace DungeonGenerator
         // Constructor
         public Cell()
         {
+            IsActive = false;
+            IsBoss = false;
+            IsShop = false;
+            IsStart = false;
+            IsVault = false;
         }
         
         // Using Manhattan Distance 

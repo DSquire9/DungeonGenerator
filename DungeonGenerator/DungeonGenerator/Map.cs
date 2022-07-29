@@ -44,6 +44,9 @@ namespace DungeonGenerator
             }
             Console.WriteLine("Map created");
             SeedKeyRooms();
+            MakePath(start, boss);
+            MakePath(start, vault);
+            MakePath(start, shop);
         }
 
         private void SeedKeyRooms()
@@ -102,9 +105,93 @@ namespace DungeonGenerator
             Console.WriteLine("Key rooms Seeded");
         }
 
-        private void MakePath()
+        private void MakePath(Cell startpoint, Cell endpoint)
         {
+            startpoint.SetDistance(endpoint.X, endpoint.Y);
+            List<Cell> activeCells = new List<Cell>();
+            activeCells.Add(startpoint);
+            List<Cell> visitedCells = new List<Cell>();
 
+            while(activeCells.Any())
+            {
+                Cell checkCell = activeCells.OrderBy(x => x.CostDistance).First();
+                
+                // Stop if we are at the endpoint
+                if (checkCell.X == endpoint.X && checkCell.Y == endpoint.Y)
+                {
+                    Cell cell = checkCell;
+                    if (endpoint.IsBoss)
+                    {
+                        cell.IsBoss = true;
+                    }
+                    if (endpoint.IsShop)
+                    {
+                        cell.IsShop = true;
+                    }
+                    if (endpoint.IsVault)
+                    {
+                        cell.IsVault = true;
+                    }
+                    while (true)
+                    {
+                        cell.IsActive = true;
+                        grid[cell.X, cell.Y] = cell;
+                        cell = cell.Parent;
+                        if (cell.Parent == null)
+                        {
+                            return;
+                        }
+                    }
+                }
+
+                visitedCells.Add(checkCell);
+                activeCells.Remove(checkCell);
+
+                List<Cell> walkableCells = GetWalkableCells(checkCell, endpoint);
+
+                foreach(Cell walkableCell in walkableCells)
+                {
+                    if (visitedCells.Any(x => x.X == walkableCell.X && x.Y == walkableCell.Y))
+                        continue;
+                    
+
+                    if (activeCells.Any(x => x.X == walkableCell.X && x.Y == walkableCell.Y))
+                    {
+                        Cell existingCell = activeCells.First(x => x.X == walkableCell.X && x.Y == walkableCell.Y);
+                        if (existingCell.CostDistance > checkCell.CostDistance)
+                        {
+                            activeCells.Remove(existingCell);
+                            activeCells.Add(walkableCell);
+                        }
+                    }
+                    else
+                    {
+                        activeCells.Add(walkableCell);
+                    }
+                }
+            }
+
+            Console.WriteLine("Pathfinding error");
+        }
+
+        private List<Cell> GetWalkableCells(Cell current, Cell target)
+        {
+            List<Cell> possibleCells = new List<Cell>()
+            {
+                new Cell{X = current.X, Y = current.Y - 1, Parent = current, Cost = current.Cost + 1 },
+                new Cell{X = current.X, Y = current.Y + 1, Parent = current, Cost = current.Cost + 1 },
+                new Cell{X = current.X - 1, Y = current.Y, Parent = current, Cost = current.Cost + 1 },
+                new Cell{X = current.X + 1, Y = current.Y, Parent = current, Cost = current.Cost + 1 }
+            };
+
+            possibleCells.ForEach(cell => cell.SetDistance(target.X, target.Y));
+
+
+            return possibleCells
+                .Where(cell => cell.X >= 0 && cell.X < mapSize)
+                .Where(cell => cell.Y >= 0 && cell.Y < mapSize)
+                .Where(cell => cell.IsShop == false && cell.IsVault == false && cell.IsBoss == false)
+                .ToList();
         }
 
         private void DisableSurrounding(int x, int y)
