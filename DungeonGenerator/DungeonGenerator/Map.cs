@@ -44,9 +44,13 @@ namespace DungeonGenerator
             }
             Console.WriteLine("Map created");
             SeedKeyRooms();
-            MakePath(start, boss);
-            MakePath(start, vault);
-            MakePath(start, shop);
+            List<Cell> bossPath = RandomizePath(MakePath(start, boss), start, boss);
+            List<Cell> vaultPath = RandomizePath(MakePath(start, vault), start, vault);
+            List<Cell> shopPath = RandomizePath(MakePath(start, shop), start, shop);
+
+            SetPath(bossPath);
+            SetPath(vaultPath);
+            SetPath(shopPath);
         }
 
         private void SeedKeyRooms()
@@ -105,8 +109,10 @@ namespace DungeonGenerator
             Console.WriteLine("Key rooms Seeded");
         }
 
-        private void MakePath(Cell startpoint, Cell endpoint)
+        private List<Cell> MakePath(Cell startpoint, Cell endpoint)
         {
+            List<Cell> witness = new List<Cell>();
+
             startpoint.SetDistance(endpoint.X, endpoint.Y);
             List<Cell> activeCells = new List<Cell>();
             activeCells.Add(startpoint);
@@ -123,23 +129,27 @@ namespace DungeonGenerator
                     if (endpoint.IsBoss)
                     {
                         cell.IsBoss = true;
+                        //cell.IsActive = true;
                     }
                     if (endpoint.IsShop)
                     {
                         cell.IsShop = true;
+                        //cell.IsActive = true;
                     }
                     if (endpoint.IsVault)
                     {
                         cell.IsVault = true;
+                        //cell.IsActive = true;
                     }
                     while (true)
                     {
-                        cell.IsActive = true;
+                        witness.Add(cell);
+                        //cell.IsActive = true;
                         grid[cell.X, cell.Y] = cell;
                         cell = cell.Parent;
                         if (cell.Parent == null)
                         {
-                            return;
+                            return witness;
                         }
                     }
                 }
@@ -171,7 +181,8 @@ namespace DungeonGenerator
                 }
             }
 
-            Console.WriteLine("Pathfinding error");
+            //Console.WriteLine("Pathfinding error");
+            return null;
         }
 
         private List<Cell> GetWalkableCells(Cell current, Cell target)
@@ -208,10 +219,75 @@ namespace DungeonGenerator
             return possibleCells
                 .Where(cell => cell.X >= 0 && cell.X < mapSize)
                 .Where(cell => cell.Y >= 0 && cell.Y < mapSize)
+                .Where(cell => grid[cell.X, cell.Y].IsBlocked == false)
                 .Where(cell => (grid[cell.X, cell.Y].IsShop == false || isShop) && (grid[cell.X, cell.Y].IsVault == false || isVault) && (grid[cell.X, cell.Y].IsBoss == false || isBoss))
                 .ToList();
         }
 
+        private List<Cell> RandomizePath(List<Cell> witness, Cell startpoint, Cell endpoint)
+        {
+            // Get a list of open cells
+            List<Cell> open = new List<Cell>();
+            List<Cell> temp = new List<Cell>();
+            
+            for (int x = 0; x < mapSize; x++)
+            {
+                for (int y = 0; y < mapSize; y++)
+                {
+                    if (!grid[x,y].IsBlocked && !grid[x,y].IsShop && !grid[x, y].IsBoss && !grid[x, y].IsVault)
+                    {
+                        open.Add(grid[x, y]);
+                    }
+                }
+            }
+
+            while (true)
+            {
+                if (!open.Any())
+                {
+                    // Reset for next path
+                    foreach (Cell cell in temp)
+                    {
+                        cell.IsBlocked = false;
+                    }
+                    return witness;
+                }
+
+                // Get a random open cell and remove it from open
+                Cell c = open[rng.Next(open.Count)];
+                open.Remove(c);
+                temp.Add(c);
+                // Set C to blocked
+                c.IsBlocked = true;
+
+                if (witness.Contains(c))
+                {
+                    List<Cell> new_path = MakePath(startpoint, endpoint);
+                    if (new_path == null)
+                    {
+                        //c.IsActive = true;
+                        c.IsBlocked = false;
+
+                    }
+                    else
+                    {
+                        witness = new_path;
+                    }
+                }
+
+
+
+
+            }
+        }
+
+        private void SetPath(List<Cell> finalPath)
+        {
+            foreach (Cell cell in finalPath)
+            {
+                grid[cell.X, cell.Y].IsActive = true;
+            }
+        }
         private void DisableSurrounding(int x, int y)
         {
 
